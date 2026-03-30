@@ -27,27 +27,44 @@ def save_data():
 # ================== START / MENU ==================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+
+    # New user create
     if user_id not in users:
-        users[user_id] = {"balance":0, "active":False, "referrer":None, "refs":0}
+        users[user_id] = {
+            "balance": 0,
+            "active": False,
+            "referrer": None,
+            "refs": 0,
+            "joined": True
+        }
+
+        # Referral system (safe)
         if context.args:
-            try:
-                referrer_id = str(int(context.args[0]))
-                if referrer_id != user_id and referrer_id in users:
-                    users[user_id]["referrer"] = referrer_id
-                    users[referrer_id]["refs"] +=1
-                    users[referrer_id]["balance"] += LEVEL_COMMISSION[1]
-                    current_ref = users[referrer_id].get("referrer")
-                    for level in range(2,6):
-                        if current_ref and current_ref in users:
-                            users[current_ref]["balance"] += LEVEL_COMMISSION[level]
-                            current_ref = users[current_ref].get("referrer")
-                        else:
-                            break
-            except:
+            ref_id = context.args[0]
+
+            # ❌ Self referral block
+            if ref_id == user_id:
                 pass
+
+            # ✅ Only valid user referral
+            elif ref_id in users:
+                users[user_id]["referrer"] = ref_id
+                users[ref_id]["refs"] += 1
+
         save_data()
 
     keyboard = [
+        [InlineKeyboardButton("💰 My Balance", callback_data="balance")],
+        [InlineKeyboardButton("👥 Referral Link", callback_data="referral")],
+        [InlineKeyboardButton("🔹 Activate Account (100৳)", callback_data="activate")],
+        [InlineKeyboardButton("💵 Withdraw", callback_data="withdraw")],
+        [InlineKeyboardButton("🎯 Tasks", callback_data="tasks")]
+    ]
+
+    await update.message.reply_text(
+        "🚀 Welcome to Refer Earn Pro Bot!",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
         [InlineKeyboardButton("💰 My Balance", callback_data="balance")],
         [InlineKeyboardButton("👥 My Referral Link", callback_data="referral")],
         [InlineKeyboardButton("🔹 Activate Account (100৳)", callback_data="activate")],
